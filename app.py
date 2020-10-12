@@ -107,12 +107,29 @@ def tobs():
     most_obv = temp_obv[0][0]
     #getting the last year of data from most active station
     temp_query = session.query(Measurement.date,Measurement.tobs).filter(Measurement.date > year_date,Measurement.station==most_obv).all()
+    session.close()
     all_temp = list(np.ravel(temp_query))
     print(all_temp)
     return jsonify(all_temp)
 
 
 
+#When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
+@app.route("/api/v1.0/<start>")
+def tobs_from_date(start):
+
+    session = Session(engine)
+    results = session.query(func.min(Measurement.tobs),func.avg(Measurement.tobs),func.max(Measurement.tobs)).filter(Measurement.date >= start).group_by(Measurement.date).first()
+    session.close()
+    return jsonify(results)
+
+@app.route("/api/v1.0/<start>/<end>")
+def tobs_start_end(start,end):
+
+    session = Session(engine)
+    results = session.query(func.min(Measurement.tobs),func.avg(Measurement.tobs),func.max(Measurement.tobs)).filter(Measurement.date >= start, Measurement.date <= end).group_by(Measurement.date).first()
+    session.close()
+    return jsonify(results)
 
 
 if __name__ == '__main__':
